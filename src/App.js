@@ -20,7 +20,7 @@ function App() {
   const API = process.env.REACT_APP_API || "http://localhost:5001";
   const fetchExpenses = async () => {
     try {
-      const res = await axios.get(`${API}/api/expenses`);
+      const res = await axios.get(`${API}/expense`);
       setExpenses(res.data);
     } catch (err) {
       console.error("Error fetching expenses:", err);
@@ -41,7 +41,7 @@ function App() {
   // Add new expense
   const addExpense = async (expense) => {
     try {
-      const res = await axios.post(`${API}/api/expenses`, expense);
+      const res = await axios.post(`${API}/expense`, expense);
       setExpenses([res.data, ...expenses]);
     } catch (err) {
       console.error("Error adding expense:", err);
@@ -51,7 +51,7 @@ function App() {
   // Delete expense
   const deleteExpense = async (id) => {
     try {
-      await axios.delete(`${API}/api/expenses${id}`);
+      await axios.delete(`${API}/expense${id}`);
       setExpenses(expenses.filter((e) => e._id !== id));
     } catch (err) {
       console.error("Error deleting expense:", err);
@@ -66,7 +66,7 @@ function App() {
     <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
       <ExpenseForm
         onAdd={ async (addExpense) => {
-          const res = await axios.post(`${API}/api/expenses`, addExpense);
+          const res = await axios.post(`${API}/expense`, addExpense);
           setExpenses([res.data, ...expenses]);
         }}
       />
