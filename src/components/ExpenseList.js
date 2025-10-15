@@ -274,6 +274,8 @@ function ExpenseList({
   });
   const [showAll, setShowAll] = useState(false);
 
+  const API = process.env.REACT_APP_API || "http://localhost:5001";
+  
   const months = [
     "All",
     "January",
