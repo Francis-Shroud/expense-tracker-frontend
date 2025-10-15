@@ -51,7 +51,7 @@ function App() {
   // Delete expense
   const deleteExpense = async (id) => {
     try {
-      await axios.delete(`${API}/expenses${id}`);
+      await axios.delete(`${API}/expenses/${id}`);
       setExpenses(expenses.filter((e) => e._id !== id));
     } catch (err) {
       console.error("Error deleting expense:", err);
