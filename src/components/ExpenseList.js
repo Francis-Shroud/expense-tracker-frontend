@@ -347,7 +347,7 @@ function ExpenseList({
   const saveEdit = async (id) => {
     try {
       const payload = { ...editForm, createdAt: new Date(editForm.createdAt).toISOString() };
-      const res = await axios.put(`http://localhost:5001/api/expenses/${id}`, payload);
+      const res = await axios.put(`${API}/expenses/${id}`, payload);
       window.alert("✅ Expense updated!");
       window.location.reload();
     } catch (err) {
