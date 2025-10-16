@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5001/api";
+const API = process.env.REACT_APP_API || "http://localhost:5001/api";
 
 function Login({ onLogin, onSwitchToRegister }) {
   const [form, setForm] = useState({ email: "", password: "" });

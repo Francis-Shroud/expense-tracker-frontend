@@ -3,8 +3,8 @@ import axios from "axios";
 import ExpenseForm from "./components/ExpenseForm";
 import ExpenseList from "./components/ExpenseList";
 import ExpenseChart from "./components/ExpenseChart";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Login from "./pages/Login.js";
+import Register from "./pages/Register.js";
 
 function App() {
   // ---- AUTH STATES ----
