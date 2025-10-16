@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import ExpenseForm from "./components/ExpenseForm";
-import ExpenseList from "./components/ExpenseList";
-import ExpenseChart from "./components/ExpenseChart";
+import ExpenseForm from "./components/ExpenseForm.js";
+import ExpenseList from "./components/ExpenseList.js";
+import ExpenseChart from "./components/ExpenseChart.js";
 import Login from "./pages/Login.js";
 import Register from "./pages/Register.js";
 
@@ -26,7 +26,7 @@ function App() {
   const [selectedYear, setSelectedYear] = useState(storedYear ? parseInt(storedYear) : currentYear);
 
   // ---- API BASE URL ----
-  const API = process.env.REACT_APP_API_URL || "http://localhost:5001/api";
+  const API = process.env.REACT_APP_API || "http://localhost:5001/api";
 
   // ---- LOAD USER SESSION ON PAGE LOAD ----
   useEffect(() => {
