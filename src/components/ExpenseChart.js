@@ -103,7 +103,7 @@ function ExpenseChart({ expenses, selectedYear = "All", selectedMonth = "All" })
   return (
     <div className="mt-10 bg-white rounded-lg shadow p-8">
       <h2 className="text-3xl font-bold text-center mb-8 text-gray-700">
-        💹 Expense Dashboard
+        💹 Monthy Expense Report
       </h2>
 
       <div className="flex flex-col gap-12 items-center w-full">
