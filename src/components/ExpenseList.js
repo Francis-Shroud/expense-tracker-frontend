@@ -9,7 +9,7 @@ function ExpenseList({
   selectedMonth,
   setSelectedMonth,
 }) {
-  const [selectedDate, setSelectedDate] = useState("All"); // 👈 new state
+  const [selectedDate, setSelectedDate] = useState("All");
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
     title: "",
@@ -17,14 +17,25 @@ function ExpenseList({
     category: "",
     createdAt: "",
   });
+
   const [showAll, setShowAll] = useState(false);
 
   const API = process.env.REACT_APP_API || "http://localhost:5001";
 
   const months = [
     "All",
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const years = [
@@ -38,31 +49,23 @@ function ExpenseList({
     ),
   ];
 
-  // ✅ Prepare all unique date strings for filtering
-  const allDates = [
+  // ✅ Available dates based on expenses
+  const dates = [
     "All",
     ...new Set(
       expenses.map((e) =>
         e.createdAt
-          ? new Date(e.createdAt).toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "long",
-              year: "numeric",
-            })
+          ? new Date(e.createdAt).toISOString().slice(0, 10) // YYYY-MM-DD
           : ""
       )
     ),
   ];
 
-  // ✅ Auto-select today's date (if exists)
+  // ✅ Auto select today’s date if available
   useEffect(() => {
     if (!expenses.length) return;
-    const today = new Date().toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-    if (allDates.includes(today)) {
+    const today = new Date().toISOString().slice(0, 10);
+    if (dates.includes(today)) {
       setSelectedDate(today);
     } else {
       setSelectedDate("All");
@@ -72,50 +75,30 @@ function ExpenseList({
     }
   }, [expenses.length]);
 
-  // ✅ Filter expenses
+  // ✅ Filter
   const filteredExpenses = expenses.filter((exp) => {
     if (!exp.createdAt) return true;
-    const expDate = new Date(exp.createdAt);
-    const monthName = months[expDate.getMonth() + 1];
-    const year = expDate.getFullYear();
-    const formattedDate = expDate.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
 
-    const matchesYear = selectedYear === "All" || year === selectedYear;
-    const matchesMonth = selectedMonth === "All" || monthName === selectedMonth;
-    const matchesDate = selectedDate === "All" || selectedDate === formattedDate;
+    const expDate = new Date(exp.createdAt);
+    const expMonth = months[expDate.getMonth() + 1];
+    const expYear = expDate.getFullYear();
+    const expDateOnly = expDate.toISOString().slice(0, 10);
+
+    const matchesYear = selectedYear === "All" || expYear === selectedYear;
+    const matchesMonth = selectedMonth === "All" || expMonth === selectedMonth;
+    const matchesDate = selectedDate === "All" || expDateOnly === selectedDate;
 
     return matchesYear && matchesMonth && matchesDate;
   });
 
-  // ✅ Sort & group by date
   const sortedExpenses = [...filteredExpenses].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
 
-  const grouped = sortedExpenses.reduce((acc, exp) => {
-    const dateKey = new Date(exp.createdAt).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-    if (!acc[dateKey]) acc[dateKey] = [];
-    acc[dateKey].push(exp);
-    return acc;
-  }, {});
-
-  const sortedDates = Object.keys(grouped).sort(
-    (a, b) => new Date(b) - new Date(a)
-  );
-
-  const visibleDates = showAll ? sortedDates : sortedDates.slice(0, 5);
-
+  const visibleExpenses = showAll ? sortedExpenses : sortedExpenses.slice(0, 5);
   const total = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-  // --- Edit functionality (same as before)
+  // --- Edit ---
   const startEditing = (exp) => {
     setEditingId(exp._id);
     setEditForm({
@@ -123,7 +106,7 @@ function ExpenseList({
       amount: exp.amount,
       category: exp.category,
       createdAt: exp.createdAt
-        ? new Date(exp.createdAt).toLocaleDateString("en-CA")
+        ? new Date(exp.createdAt).toISOString().slice(0, 10)
         : "",
     });
   };
@@ -152,31 +135,51 @@ function ExpenseList({
     }
   };
 
-  if (!expenses.length) {
+  if (!expenses.length)
     return (
       <p className="text-center text-gray-500 mt-4">
         No expenses yet. Add your first one above 👆
       </p>
     );
-  }
 
   return (
     <div className="mt-8">
-      {/* Header filters */}
+      {/* Filters */}
       <div className="flex flex-wrap justify-between items-center mb-4">
         <div className="flex gap-3">
-          {/* Month */}
+          {/* Date Filter */}
+          <select
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="border border-gray-300 p-2 rounded"
+          >
+            {dates.map((d, i) => (
+              <option key={i} value={d}>
+                {d === "All"
+                  ? "All Dates"
+                  : new Date(d).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+              </option>
+            ))}
+          </select>
+
+          {/* Month Filter */}
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
             className="border border-gray-300 p-2 rounded"
           >
             {months.map((m, i) => (
-              <option key={i} value={m}>{m}</option>
+              <option key={i} value={m}>
+                {m}
+              </option>
             ))}
           </select>
 
-          {/* Year */}
+          {/* Year Filter */}
           <select
             value={selectedYear}
             onChange={(e) =>
@@ -187,19 +190,8 @@ function ExpenseList({
             className="border border-gray-300 p-2 rounded"
           >
             {years.map((y, i) => (
-              <option key={i} value={y}>{y}</option>
-            ))}
-          </select>
-
-          {/* Date */}
-          <select
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="border border-gray-300 p-2 rounded"
-          >
-            {allDates.map((d, i) => (
-              <option key={i} value={d}>
-                {d === "All" ? "All Dates" : d}
+              <option key={i} value={y}>
+                {y}
               </option>
             ))}
           </select>
@@ -211,105 +203,101 @@ function ExpenseList({
         </p>
       </div>
 
-      {/* Grouped expense display */}
-      {visibleDates.map((dateKey) => (
-        <div key={dateKey} className="mb-6">
-          <h3 className="text-blue-700 font-semibold text-lg flex items-center gap-2 mb-2">
-            📅 {dateKey}
-          </h3>
-
-          <div className="space-y-3">
-            {grouped[dateKey].map((exp) => (
-              <div
-                key={exp._id}
-                className="flex justify-between items-center bg-gray-50 p-4 border rounded shadow-sm hover:shadow-md transition-shadow"
-              >
-                {editingId === exp._id ? (
-                  // Edit Mode
-                  <div className="flex flex-col md:flex-row gap-2 w-full">
-                    <input
-                      type="text"
-                      name="title"
-                      value={editForm.title}
-                      onChange={handleEditChange}
-                      className="border rounded p-2 flex-1"
-                    />
-                    <input
-                      type="number"
-                      name="amount"
-                      value={editForm.amount}
-                      onChange={handleEditChange}
-                      className="border rounded p-2 w-24"
-                    />
-                    <input
-                      type="text"
-                      name="category"
-                      value={editForm.category}
-                      onChange={handleEditChange}
-                      className="border rounded p-2 w-32"
-                    />
-                    <input
-                      type="date"
-                      name="createdAt"
-                      value={editForm.createdAt}
-                      onChange={handleEditChange}
-                      className="border rounded p-2 w-40"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => saveEdit(exp._id)}
-                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={cancelEditing}
-                        className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  // View Mode
-                  <>
-                    <div>
-                      <p className="text-lg font-semibold">{exp.title}</p>
-                      <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
-                        {exp.category || "Uncategorized"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <span className="text-green-700 font-bold text-lg">
-                        ₹{exp.amount.toLocaleString()}
-                      </span>
-
-                      <button
-                        onClick={() => startEditing(exp)}
-                        className="text-blue-600 hover:text-blue-800 text-xl"
-                        title="Edit"
-                      >
-                        ✏️
-                      </button>
-
-                      <button
-                        onClick={() => onDelete(exp._id)}
-                        className="text-red-600 hover:text-red-800 text-xl"
-                        title="Delete"
-                      >
-                        🗑
-                      </button>
-                    </div>
-                  </>
-                )}
+      {/* Expense List */}
+      <div className="space-y-3">
+        {visibleExpenses.map((exp) => (
+          <div
+            key={exp._id}
+            className="flex justify-between items-center bg-gray-50 p-4 border rounded shadow-sm hover:shadow-md transition-shadow"
+          >
+            {editingId === exp._id ? (
+              // Edit Mode
+              <div className="flex flex-col md:flex-row gap-2 w-full">
+                <input
+                  type="text"
+                  name="title"
+                  value={editForm.title}
+                  onChange={handleEditChange}
+                  className="border rounded p-2 flex-1"
+                />
+                <input
+                  type="number"
+                  name="amount"
+                  value={editForm.amount}
+                  onChange={handleEditChange}
+                  className="border rounded p-2 w-24"
+                />
+                <input
+                  type="text"
+                  name="category"
+                  value={editForm.category}
+                  onChange={handleEditChange}
+                  className="border rounded p-2 w-32"
+                />
+                <input
+                  type="date"
+                  name="createdAt"
+                  value={editForm.createdAt}
+                  onChange={handleEditChange}
+                  className="border rounded p-2 w-40"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => saveEdit(exp._id)}
+                    className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      ))}
+            ) : (
+              // View Mode
+              <>
+                <div>
+                  <p className="text-lg font-semibold">{exp.title}</p>
+                  <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
+                    {exp.category || "Uncategorized"}
+                  </span>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Added on:{" "}
+                    {new Date(exp.createdAt).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
 
-      {sortedDates.length > 5 && (
+                <div className="flex items-center gap-4">
+                  <span className="text-green-700 font-bold text-lg">
+                    ₹{exp.amount.toLocaleString()}
+                  </span>
+                  <button
+                    onClick={() => startEditing(exp)}
+                    className="text-blue-600 hover:text-blue-800 text-xl"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => onDelete(exp._id)}
+                    className="text-red-600 hover:text-red-800 text-xl"
+                  >
+                    🗑
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {sortedExpenses.length > 5 && (
         <div className="text-center mt-4">
           <button
             onClick={() => setShowAll(!showAll)}
