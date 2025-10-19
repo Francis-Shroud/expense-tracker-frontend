@@ -61,19 +61,22 @@ function ExpenseList({
     ),
   ];
 
-  // ✅ Auto select today’s date if available
-  useEffect(() => {
-    if (!expenses.length) return;
-    const today = new Date().toISOString().slice(0, 10);
-    if (dates.includes(today)) {
-      setSelectedDate(today);
-    } else {
-      setSelectedDate("All");
-      setSelectedMonth(
-        new Date().toLocaleString("default", { month: "long" })
-      );
-    }
-  }, [expenses.length]);
+// ✅ Auto select today's date or fallback to current month
+useEffect(() => {
+  if (!expenses.length) return;
+
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const currentMonth = new Date().toLocaleString("default", { month: "long" });
+
+  if (dates.includes(todayISO)) {
+    // 🟢 If today exists in expenses, show today
+    setSelectedDate(todayISO);
+  } else {
+    // 🟡 Otherwise, fallback to current month instead of "All"
+    setSelectedDate("All");
+    setSelectedMonth(currentMonth);
+  }
+}, [expenses, dates]);
 
   // ✅ Filter
   const filteredExpenses = expenses.filter((exp) => {
