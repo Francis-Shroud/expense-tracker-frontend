@@ -5,11 +5,14 @@ import ExpenseList from "./components/ExpenseList.js";
 import ExpenseChart from "./components/ExpenseChart.js";
 import Login from "./pages/Login.js";
 import Register from "./pages/Register.js";
+import { Toaster, toast } from "react-hot-toast";
+import Loader from "./components/Loader.js";
 
 function App() {
   // ---- AUTH STATES ----
   const [user, setUser] = useState(null);
   const [showRegister, setShowRegister] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // ---- EXPENSE STATES ----
   const [expenses, setExpenses] = useState([]);
@@ -28,13 +31,13 @@ function App() {
   // ---- API BASE URL ----
   const API = process.env.REACT_APP_API || "http://localhost:5001/api";
 
-  // ---- LOAD USER SESSION ON PAGE LOAD ----
+  // ---- LOAD USER SESSION ----
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) setUser(JSON.parse(savedUser));
   }, []);
 
-  // ---- FETCH EXPENSES (ONLY IF LOGGED IN) ----
+  // ---- FETCH EXPENSES ----
   const fetchExpenses = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -44,6 +47,10 @@ function App() {
       setExpenses(res.data);
     } catch (err) {
       console.error("Error fetching expenses:", err);
+      toast.error("Failed to load expenses ❌");
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -57,7 +64,7 @@ function App() {
     localStorage.setItem("selectedYear", selectedYear);
   }, [selectedMonth, selectedYear]);
 
-  // ---- ADD NEW EXPENSE ----
+  // ---- ADD EXPENSE ----
   const addExpense = async (expense) => {
     try {
       const token = localStorage.getItem("token");
@@ -65,8 +72,12 @@ function App() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setExpenses([res.data, ...expenses]);
+      toast.success("✅ Expense added successfully!");
     } catch (err) {
       console.error("Error adding expense:", err);
+      toast.error("Failed to add expense ❌");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,8 +89,12 @@ function App() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setExpenses(expenses.filter((e) => e._id !== id));
+      toast("🗑 Expense deleted", { icon: "🗑" });
     } catch (err) {
       console.error("Error deleting expense:", err);
+      toast.error("Failed to delete expense ❌");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,9 +103,10 @@ function App() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
+    toast.success("👋 Logged out successfully");
   };
 
-  // ---- IF USER NOT LOGGED IN ----
+  // ---- AUTH SCREEN ----
   if (!user) {
     return showRegister ? (
       <Register onSwitchToLogin={() => setShowRegister(false)} />
@@ -102,12 +118,13 @@ function App() {
     );
   }
 
-  // ---- MAIN APP DASHBOARD ----
+  // ---- MAIN APP ----
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
       {/* Header */}
       <div className="flex justify-between items-center w-full max-w-4xl mb-6">
         <h1 className="text-3xl font-bold text-blue-700">💰 Expense Tracker</h1>
+        <Toaster position="top-right" reverseOrder={false} />
         <div className="flex items-center gap-4">
           <span className="text-gray-700">👤 {user.name}</span>
           <button
@@ -118,8 +135,10 @@ function App() {
           </button>
         </div>
       </div>
-
       {/* Content */}
+      {loading ? (
+        <Loader message = "Please Wait..."/>
+      ) : (
       <div className="max-w-4xl w-full bg-white p-8 rounded-2xl shadow-lg">
         <ExpenseForm onAdd={addExpense} />
         <ExpenseList
@@ -135,7 +154,7 @@ function App() {
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
         />
-      </div>
+      </div> )}
     </div>
   );
 }
