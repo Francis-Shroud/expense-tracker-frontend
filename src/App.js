@@ -26,9 +26,12 @@ function App() {
   const storedYear = localStorage.getItem("selectedYear");
 
   const [selectedMonth, setSelectedMonth] = useState(storedMonth || currentMonth);
-  const [selectedYear, setSelectedYear] = useState(storedYear ? parseInt(storedYear) : currentYear);
+  const [selectedYear, setSelectedYear] = useState(
+    storedYear ? parseInt(storedYear) : currentYear
+  );
   const [selectedDate, setSelectedDate] = useState(null);
 
+  // ---- API BASE URL ----
   const API = process.env.REACT_APP_API || "http://localhost:5001/api";
 
   // ---- LOAD USER SESSION ----
@@ -41,9 +44,8 @@ function App() {
 
   // ---- FETCH EXPENSES ----
   const fetchExpenses = async () => {
-    if (!user) return;
-    setLoading(true); // ✅ start loading before request
     try {
+      setLoading(true);
       const token = localStorage.getItem("token");
       const res = await axios.get(`${API}/expenses`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -51,13 +53,13 @@ function App() {
       setExpenses(res.data);
     } catch (err) {
       console.error("Error fetching expenses:", err);
-      toast.error("Failed to load expenses ❌");
+      toast.error("❌ Failed to load expenses");
     } finally {
-      setLoading(false); // ✅ stop loader
+      setLoading(false);
     }
   };
 
-  // ---- When user logs in ----
+  // ---- FETCH when user logs in ----
   useEffect(() => {
     if (user) {
       fetchExpenses();
@@ -72,8 +74,8 @@ function App() {
 
   // ---- ADD EXPENSE ----
   const addExpense = async (expense) => {
-    setLoading(true);
     try {
+      setLoading(true);
       const token = localStorage.getItem("token");
       const res = await axios.post(`${API}/expenses`, expense, {
         headers: { Authorization: `Bearer ${token}` },
@@ -82,7 +84,7 @@ function App() {
       toast.success("✅ Expense added successfully!");
     } catch (err) {
       console.error("Error adding expense:", err);
-      toast.error("Failed to add expense ❌");
+      toast.error("❌ Failed to add expense");
     } finally {
       setLoading(false);
     }
@@ -90,17 +92,17 @@ function App() {
 
   // ---- DELETE EXPENSE ----
   const deleteExpense = async (id) => {
-    setLoading(true);
     try {
+      setLoading(true);
       const token = localStorage.getItem("token");
       await axios.delete(`${API}/expenses/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setExpenses(expenses.filter((e) => e._id !== id));
-      toast("🗑 Expense deleted", { icon: "🗑" });
+      toast("🗑 Expense deleted");
     } catch (err) {
       console.error("Error deleting expense:", err);
-      toast.error("Failed to delete expense ❌");
+      toast.error("❌ Failed to delete expense");
     } finally {
       setLoading(false);
     }
@@ -122,9 +124,9 @@ function App() {
     ) : (
       <Login
         onLogin={(u) => {
+          // ✅ Save user and immediately fetch expenses
           setUser(u);
-          setLoading(true); // ✅ start loading immediately after login success
-          setTimeout(() => setLoading(false), 1000); // small delay for smooth transition
+          fetchExpenses(); // No loader lock
         }}
         onSwitchToRegister={() => setShowRegister(true)}
       />
@@ -149,9 +151,9 @@ function App() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Loader */}
       {loading ? (
-        <Loader message="Please Wait..." />
+        <Loader message="Loading your expenses, please wait..." />
       ) : (
         <div className="max-w-4xl w-full bg-white p-8 rounded-2xl shadow-lg">
           <ExpenseForm onAdd={addExpense} />
