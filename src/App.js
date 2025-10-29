@@ -148,11 +148,14 @@ function App() {
           setSelectedMonth={setSelectedMonth}
           selectedYear={selectedYear}
           setSelectedYear={setSelectedYear}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
         />
         <ExpenseChart
           expenses={expenses}
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
+          selectedDate={selectedDate}
         />
       </div> )}
     </div>
