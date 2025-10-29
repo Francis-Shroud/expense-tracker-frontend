@@ -29,17 +29,20 @@ function App() {
   const [selectedYear, setSelectedYear] = useState(storedYear ? parseInt(storedYear) : currentYear);
   const [selectedDate, setSelectedDate] = useState(null);
 
-  // ---- API BASE URL ----
   const API = process.env.REACT_APP_API || "http://localhost:5001/api";
 
   // ---- LOAD USER SESSION ----
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
-    if (savedUser) setUser(JSON.parse(savedUser));
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
   }, []);
 
   // ---- FETCH EXPENSES ----
   const fetchExpenses = async () => {
+    if (!user) return;
+    setLoading(true); // ✅ start loading before request
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(`${API}/expenses`, {
@@ -49,14 +52,16 @@ function App() {
     } catch (err) {
       console.error("Error fetching expenses:", err);
       toast.error("Failed to load expenses ❌");
-    }
-    finally {
-      setLoading(false);
+    } finally {
+      setLoading(false); // ✅ stop loader
     }
   };
 
+  // ---- When user logs in ----
   useEffect(() => {
-    if (user) fetchExpenses();
+    if (user) {
+      fetchExpenses();
+    }
   }, [user]);
 
   // ---- SAVE FILTER STATE ----
@@ -67,6 +72,7 @@ function App() {
 
   // ---- ADD EXPENSE ----
   const addExpense = async (expense) => {
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(`${API}/expenses`, expense, {
@@ -84,6 +90,7 @@ function App() {
 
   // ---- DELETE EXPENSE ----
   const deleteExpense = async (id) => {
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`${API}/expenses/${id}`, {
@@ -104,6 +111,7 @@ function App() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
+    setExpenses([]);
     toast.success("👋 Logged out successfully");
   };
 
@@ -113,7 +121,11 @@ function App() {
       <Register onSwitchToLogin={() => setShowRegister(false)} />
     ) : (
       <Login
-        onLogin={(u) => setUser(u)}
+        onLogin={(u) => {
+          setUser(u);
+          setLoading(true); // ✅ start loading immediately after login success
+          setTimeout(() => setLoading(false), 1000); // small delay for smooth transition
+        }}
         onSwitchToRegister={() => setShowRegister(true)}
       />
     );
@@ -136,29 +148,31 @@ function App() {
           </button>
         </div>
       </div>
+
       {/* Content */}
       {loading ? (
-        <Loader message = "Please Wait..."/>
+        <Loader message="Please Wait..." />
       ) : (
-      <div className="max-w-4xl w-full bg-white p-8 rounded-2xl shadow-lg">
-        <ExpenseForm onAdd={addExpense} />
-        <ExpenseList
-          expenses={expenses}
-          onDelete={deleteExpense}
-          selectedMonth={selectedMonth}
-          setSelectedMonth={setSelectedMonth}
-          selectedYear={selectedYear}
-          setSelectedYear={setSelectedYear}
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-        />
-        <ExpenseChart
-          expenses={expenses}
-          selectedMonth={selectedMonth}
-          selectedYear={selectedYear}
-          selectedDate={selectedDate}
-        />
-      </div> )}
+        <div className="max-w-4xl w-full bg-white p-8 rounded-2xl shadow-lg">
+          <ExpenseForm onAdd={addExpense} />
+          <ExpenseList
+            expenses={expenses}
+            onDelete={deleteExpense}
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+            selectedYear={selectedYear}
+            setSelectedYear={setSelectedYear}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+          />
+          <ExpenseChart
+            expenses={expenses}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            selectedDate={selectedDate}
+          />
+        </div>
+      )}
     </div>
   );
 }
