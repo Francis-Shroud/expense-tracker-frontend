@@ -26,10 +26,7 @@ function App() {
   const storedYear = localStorage.getItem("selectedYear");
 
   const [selectedMonth, setSelectedMonth] = useState(storedMonth || currentMonth);
-  const [selectedYear, setSelectedYear] = useState(
-    storedYear ? parseInt(storedYear) : currentYear
-  );
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(storedYear ? parseInt(storedYear) : currentYear);
 
   // ---- API BASE URL ----
   const API = process.env.REACT_APP_API || "http://localhost:5001/api";
@@ -37,15 +34,12 @@ function App() {
   // ---- LOAD USER SESSION ----
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
+    if (savedUser) setUser(JSON.parse(savedUser));
   }, []);
 
   // ---- FETCH EXPENSES ----
   const fetchExpenses = async () => {
     try {
-      setLoading(true);
       const token = localStorage.getItem("token");
       const res = await axios.get(`${API}/expenses`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -53,17 +47,15 @@ function App() {
       setExpenses(res.data);
     } catch (err) {
       console.error("Error fetching expenses:", err);
-      toast.error("❌ Failed to load expenses");
-    } finally {
+      toast.error("Failed to load expenses ❌");
+    }
+    finally {
       setLoading(false);
     }
   };
 
-  // ---- FETCH when user logs in ----
   useEffect(() => {
-    if (user) {
-      fetchExpenses();
-    }
+    if (user) fetchExpenses();
   }, [user]);
 
   // ---- SAVE FILTER STATE ----
@@ -75,7 +67,6 @@ function App() {
   // ---- ADD EXPENSE ----
   const addExpense = async (expense) => {
     try {
-      setLoading(true);
       const token = localStorage.getItem("token");
       const res = await axios.post(`${API}/expenses`, expense, {
         headers: { Authorization: `Bearer ${token}` },
@@ -84,7 +75,7 @@ function App() {
       toast.success("✅ Expense added successfully!");
     } catch (err) {
       console.error("Error adding expense:", err);
-      toast.error("❌ Failed to add expense");
+      toast.error("Failed to add expense ❌");
     } finally {
       setLoading(false);
     }
@@ -93,16 +84,15 @@ function App() {
   // ---- DELETE EXPENSE ----
   const deleteExpense = async (id) => {
     try {
-      setLoading(true);
       const token = localStorage.getItem("token");
       await axios.delete(`${API}/expenses/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setExpenses(expenses.filter((e) => e._id !== id));
-      toast("🗑 Expense deleted");
+      toast("🗑 Expense deleted", { icon: "🗑" });
     } catch (err) {
       console.error("Error deleting expense:", err);
-      toast.error("❌ Failed to delete expense");
+      toast.error("Failed to delete expense ❌");
     } finally {
       setLoading(false);
     }
@@ -113,7 +103,6 @@ function App() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-    setExpenses([]);
     toast.success("👋 Logged out successfully");
   };
 
@@ -123,11 +112,7 @@ function App() {
       <Register onSwitchToLogin={() => setShowRegister(false)} />
     ) : (
       <Login
-        onLogin={(u) => {
-          // ✅ Save user and immediately fetch expenses
-          setUser(u);
-          fetchExpenses(); // No loader lock
-        }}
+        onLogin={(u) => setUser(u)}
         onSwitchToRegister={() => setShowRegister(true)}
       />
     );
@@ -150,31 +135,26 @@ function App() {
           </button>
         </div>
       </div>
-
-      {/* Loader */}
+      {/* Content */}
       {loading ? (
-        <Loader message="Loading your expenses, please wait..." />
+        <Loader message = "Please Wait..."/>
       ) : (
-        <div className="max-w-4xl w-full bg-white p-8 rounded-2xl shadow-lg">
-          <ExpenseForm onAdd={addExpense} />
-          <ExpenseList
-            expenses={expenses}
-            onDelete={deleteExpense}
-            selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
-            selectedYear={selectedYear}
-            setSelectedYear={setSelectedYear}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-          />
-          <ExpenseChart
-            expenses={expenses}
-            selectedMonth={selectedMonth}
-            selectedYear={selectedYear}
-            selectedDate={selectedDate}
-          />
-        </div>
-      )}
+      <div className="max-w-4xl w-full bg-white p-8 rounded-2xl shadow-lg">
+        <ExpenseForm onAdd={addExpense} />
+        <ExpenseList
+          expenses={expenses}
+          onDelete={deleteExpense}
+          selectedMonth={selectedMonth}
+          setSelectedMonth={setSelectedMonth}
+          selectedYear={selectedYear}
+          setSelectedYear={setSelectedYear}
+        />
+        <ExpenseChart
+          expenses={expenses}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+        />
+      </div> )}
     </div>
   );
 }
