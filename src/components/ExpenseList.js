@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
-function ExpenseList({
-  expenses,
-  onDelete,
-  selectedYear,
-  setSelectedYear,
-  selectedMonth,
-  setSelectedMonth,
-}) {
-  const [selectedDate, setSelectedDate] = useState("All");
+function ExpenseList({ expenses, onDelete }) {
+  const [selectedDate, setSelectedDate] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
     title: "",
@@ -17,88 +12,36 @@ function ExpenseList({
     category: "",
     createdAt: "",
   });
-
   const [showAll, setShowAll] = useState(false);
 
   const API = process.env.REACT_APP_API || "http://localhost:5001";
 
-  const months = [
-    "All",
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  const years = [
-    "All",
-    ...new Set(
-      expenses.map((e) =>
-        e.createdAt
-          ? new Date(e.createdAt).getFullYear()
-          : new Date().getFullYear()
-      )
-    ),
-  ];
-
-  // ✅ Available dates based on expenses
-  const dates = [
-    "All",
-    ...new Set(
-      expenses.map((e) =>
-        e.createdAt
-          ? new Date(e.createdAt).toISOString().slice(0, 10) // YYYY-MM-DD
-          : ""
-      )
-    ),
-  ];
-
-  // ✅ Auto select today’s date if available
+  // ✅ Auto-select today (if any expenses exist for today)
   useEffect(() => {
     if (!expenses.length) return;
-    const today = new Date().toISOString().slice(0, 10);
-    if (dates.includes(today)) {
-      setSelectedDate(today);
-    } else {
-      setSelectedDate("All");
-      setSelectedMonth(
-        new Date().toLocaleString("default", { month: "long" })
-      );
-    }
-  }, [expenses.length]);
+    const today = new Date();
+    const hasToday = expenses.some(
+      (e) =>
+        new Date(e.createdAt).toDateString() === today.toDateString()
+    );
+    if (hasToday) setSelectedDate(today);
+  }, [expenses]);
 
-  // ✅ Filter
+  // ✅ Filter expenses by selected date
   const filteredExpenses = expenses.filter((exp) => {
     if (!exp.createdAt) return true;
-
+    if (!selectedDate) return true;
     const expDate = new Date(exp.createdAt);
-    const expMonth = months[expDate.getMonth() + 1];
-    const expYear = expDate.getFullYear();
-    const expDateOnly = expDate.toISOString().slice(0, 10);
-
-    const matchesYear = selectedYear === "All" || expYear === selectedYear;
-    const matchesMonth = selectedMonth === "All" || expMonth === selectedMonth;
-    const matchesDate = selectedDate === "All" || expDateOnly === selectedDate;
-
-    return matchesYear && matchesMonth && matchesDate;
+    return expDate.toDateString() === selectedDate.toDateString();
   });
 
   const sortedExpenses = [...filteredExpenses].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
-
   const visibleExpenses = showAll ? sortedExpenses : sortedExpenses.slice(0, 5);
   const total = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-  // --- Edit ---
+  // --- Edit Logic ---
   const startEditing = (exp) => {
     setEditingId(exp._id);
     setEditForm({
@@ -144,60 +87,22 @@ function ExpenseList({
 
   return (
     <div className="mt-8">
-      {/* Filters */}
+      {/* Filter Header */}
       <div className="flex flex-wrap justify-between items-center mb-4">
-        <div className="flex gap-3">
-          {/* Date Filter */}
-          <select
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="border border-gray-300 p-2 rounded"
-          >
-            {dates.map((d, i) => (
-              <option key={i} value={d}>
-                {d === "All"
-                  ? "All Dates"
-                  : new Date(d).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      // month: "short",
-                      // year: "numeric",
-                    })}
-              </option>
-            ))}
-          </select>
+        {/* 📅 Calendar Filter */}
+        <DatePicker
+          selected={selectedDate}
+          onChange={(date) => setSelectedDate(date)}
+          isClearable
+          placeholderText="Select a date"
+          dateFormat="dd/MM/yyyy"
+          showMonthDropdown
+          showYearDropdown
+          dropdownMode="select"
+          className="border border-gray-300 p-2 rounded text-gray-700"
+        />
 
-          {/* Month Filter */}
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="border border-gray-300 p-2 rounded"
-          >
-            {months.map((m, i) => (
-              <option key={i} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-
-          {/* Year Filter */}
-          <select
-            value={selectedYear}
-            onChange={(e) =>
-              setSelectedYear(
-                e.target.value === "All" ? "All" : parseInt(e.target.value)
-              )
-            }
-            className="border border-gray-300 p-2 rounded"
-          >
-            {years.map((y, i) => (
-              <option key={i} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Total */}
+        {/* 💰 Total */}
         <p className="text-lg font-bold text-gray-700">
           Total: ₹{total.toLocaleString()}
         </p>
@@ -297,6 +202,7 @@ function ExpenseList({
         ))}
       </div>
 
+      {/* Show More / Less */}
       {sortedExpenses.length > 5 && (
         <div className="text-center mt-4">
           <button
