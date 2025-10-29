@@ -32,7 +32,7 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(null);
 
   // ---- API BASE URL ----
-  const API = process.env.REACT_APP_API || "http://localhost:5001";
+  const API = process.env.REACT_APP_API || "http://localhost:5001/api";
 
   // ---- LOAD USER SESSION ----
   useEffect(() => {
