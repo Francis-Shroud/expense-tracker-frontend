@@ -3,13 +3,16 @@ import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-function ExpenseList({ expenses, onDelete, selectedYear,
+function ExpenseList({
+  expenses,
+  onDelete,
+  selectedYear,
   setSelectedYear,
   selectedMonth,
   setSelectedMonth,
   selectedDate,
-  setSelectedDate,}) {
-  const [selectedDate, setSelectedDate] = useState(null);
+  setSelectedDate, // ✅ now only from props
+}) {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
     title: "",
@@ -21,32 +24,43 @@ function ExpenseList({ expenses, onDelete, selectedYear,
 
   const API = process.env.REACT_APP_API || "http://localhost:5001";
 
-  // ✅ Auto-select today (if any expenses exist for today)
+  // ✅ Auto-select today if available
   useEffect(() => {
     if (!expenses.length) return;
     const today = new Date();
     const hasToday = expenses.some(
-      (e) =>
-        new Date(e.createdAt).toDateString() === today.toDateString()
+      (e) => new Date(e.createdAt).toDateString() === today.toDateString()
     );
-    if (hasToday) setSelectedDate(today);
+    if (hasToday && !selectedDate) setSelectedDate(today);
   }, [expenses]);
 
-  // ✅ Filter expenses by selected date
+  // ✅ Filter by date/month/year
   const filteredExpenses = expenses.filter((exp) => {
-    if (!exp.createdAt) return true;
-    if (!selectedDate) return true;
+    if (!exp.createdAt) return false;
     const expDate = new Date(exp.createdAt);
-    return expDate.toDateString() === selectedDate.toDateString();
+
+    const matchesDate =
+      !selectedDate ||
+      expDate.toDateString() === new Date(selectedDate).toDateString();
+
+    const matchesMonth =
+      selectedMonth === "All" ||
+      expDate.toLocaleString("default", { month: "long" }) === selectedMonth;
+
+    const matchesYear =
+      selectedYear === "All" || expDate.getFullYear() === selectedYear;
+
+    return matchesDate && matchesMonth && matchesYear;
   });
 
+  // ✅ Sort newest first
   const sortedExpenses = [...filteredExpenses].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
   const visibleExpenses = showAll ? sortedExpenses : sortedExpenses.slice(0, 5);
   const total = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-  // --- Edit Logic ---
+  // --- Edit Functions ---
   const startEditing = (exp) => {
     setEditingId(exp._id);
     setEditForm({
@@ -94,7 +108,7 @@ function ExpenseList({ expenses, onDelete, selectedYear,
     <div className="mt-8">
       {/* Filter Header */}
       <div className="flex flex-wrap justify-between items-center mb-4">
-        {/* 📅 Calendar Filter */}
+        {/* 📅 Calendar */}
         <DatePicker
           selected={selectedDate}
           onChange={(date) => setSelectedDate(date)}
