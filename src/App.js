@@ -27,7 +27,7 @@ function App() {
 
   const [selectedMonth, setSelectedMonth] = useState(storedMonth || currentMonth);
   const [selectedYear, setSelectedYear] = useState(storedYear ? parseInt(storedYear) : currentYear);
-  const [selectedDate, setSelectedDate] = useState("All");
+  const [selectedDate, setSelectedDate] = useState(null);
 
   // ---- API BASE URL ----
   const API = process.env.REACT_APP_API || "http://localhost:5001/api";
