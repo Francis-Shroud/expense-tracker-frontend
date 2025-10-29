@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   PieChart,
   Pie,
@@ -13,7 +13,7 @@ import {
   Legend,
 } from "recharts";
 
-// ✅ Reusable hook that updates when window resizes
+// ✅ Responsive hook
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
   useEffect(() => {
@@ -25,7 +25,7 @@ function useIsMobile() {
 }
 
 function ExpenseChart({ expenses, selectedYear = "All", selectedMonth = "All" }) {
-  const isMobile = useIsMobile(); // ✅ Detect mobile screen
+  const isMobile = useIsMobile();
 
   if (!expenses.length)
     return (
@@ -36,28 +36,35 @@ function ExpenseChart({ expenses, selectedYear = "All", selectedMonth = "All" })
 
   const months = [
     "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "July", "August", "September", "October", "November", "December",
   ];
 
-  // ✅ Filter by selected year/month
+  // ✅ Automatically use current month/year if "All"
+  const currentDate = new Date();
+  const activeYear =
+    selectedYear === "All" ? currentDate.getFullYear() : selectedYear;
+  const activeMonth =
+    selectedMonth === "All"
+      ? months[currentDate.getMonth()]
+      : selectedMonth;
+
+  // ✅ Filter by active month/year
   const filteredExpenses = expenses.filter((exp) => {
     if (!exp.createdAt) return false;
     const date = new Date(exp.createdAt);
     const year = date.getFullYear();
     const monthName = months[date.getMonth()];
-    const yearMatch = selectedYear === "All" || year === selectedYear;
-    const monthMatch = selectedMonth === "All" || monthName === selectedMonth;
-    return yearMatch && monthMatch;
+    return year === activeYear && monthName === activeMonth;
   });
 
   if (filteredExpenses.length === 0)
     return (
       <p className="text-center text-gray-500 mt-6">
-        No expenses found for the selected period 📆
+        No expenses found for {activeMonth} {activeYear} 📆
       </p>
     );
 
-  // ---------- 1️⃣ Pie chart (category breakdown) ----------
+  // ---------- 🥧 Category Breakdown ----------
   const categoryTotals = filteredExpenses.reduce((acc, exp) => {
     const cat = exp.category || "Uncategorized";
     acc[cat] = (acc[cat] || 0) + exp.amount;
@@ -69,7 +76,7 @@ function ExpenseChart({ expenses, selectedYear = "All", selectedMonth = "All" })
     value,
   }));
 
-  // ---------- 2️⃣ Stacked Bar chart (monthly totals by category) ----------
+  // ---------- 📊 Monthly Stacked Chart ----------
   const categories = [
     ...new Set(filteredExpenses.map((e) => e.category || "Uncategorized")),
   ];
@@ -79,10 +86,7 @@ function ExpenseChart({ expenses, selectedYear = "All", selectedMonth = "All" })
       if (!exp.createdAt) return false;
       const d = new Date(exp.createdAt);
       const year = d.getFullYear();
-      return (
-        (selectedYear === "All" || year === selectedYear) &&
-        d.getMonth() === i
-      );
+      return year === activeYear && d.getMonth() === i;
     });
 
     const monthObject = { month: m };
@@ -103,7 +107,7 @@ function ExpenseChart({ expenses, selectedYear = "All", selectedMonth = "All" })
   return (
     <div className="mt-10 bg-white rounded-lg shadow p-8">
       <h2 className="text-3xl font-bold text-center mb-8 text-gray-700">
-        💹 Monthy Expense Report
+        💹 Expense Dashboard – {activeMonth} {activeYear}
       </h2>
 
       <div className="flex flex-col gap-12 items-center w-full">
